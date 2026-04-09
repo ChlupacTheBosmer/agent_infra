@@ -83,9 +83,19 @@ echo "  ✓ Configuration collected"
 echo ""
 echo "Step 3: Querying CERIT models..."
 
-# Pre-configured CERIT credentials
-CERIT_API_KEY_FIXED="REPLACE_WITH_CERIT_API_KEY"
+# CERIT credentials – prompt if not already set in environment
 CERIT_BASE_URL_FIXED="https://llm.ai.e-infra.cz/"
+if [ -z "${CERIT_API_KEY:-}" ]; then
+  echo ""
+  read -r -p "  Enter your CERIT API key (get one at https://llm.ai.e-infra.cz/): " CERIT_API_KEY_FIXED
+  if [ -z "$CERIT_API_KEY_FIXED" ]; then
+    echo "  WARNING: No CERIT API key provided. CERIT workers will not function until you set CERIT_API_KEY."
+    CERIT_API_KEY_FIXED=""
+  fi
+else
+  CERIT_API_KEY_FIXED="${CERIT_API_KEY}"
+  echo "  Using CERIT_API_KEY from environment."
+fi
 
 MODEL_LIST=$(curl -s --max-time 15 \
   -H "Authorization: Bearer $CERIT_API_KEY_FIXED" \

@@ -35,3 +35,6 @@ logs/
 
 # Git worktrees (created by parallel-implement.sh)
 .claude/worktrees/
+
+# Local Claude Code permission cache (may contain credentials in allow-list entries)
+.claude/settings.local.json
