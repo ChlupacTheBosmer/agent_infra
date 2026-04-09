@@ -138,6 +138,7 @@ echo "[cerit-worker] Starting task at $TIMESTAMP"
 echo "[cerit-worker] Output: $OUTPUT_FILE"
 echo "[cerit-worker] Branch: ${BRANCH:-none}"
 
+# ── Run worker in background, heartbeat every 30s so the caller doesn't time out ──
 ANTHROPIC_BASE_URL="${CERIT_BASE_URL}" \
 ANTHROPIC_AUTH_TOKEN="${CERIT_API_KEY}" \
 ANTHROPIC_MODEL="${CERIT_CODER_MODEL}" \
@@ -150,11 +151,22 @@ claude -p "$(cat "$TASK_FILE")" \
   --max-turns "$MAX_TURNS" \
   --dangerously-skip-permissions \
   --output-format text \
-  2>&1 | tee -a "${HOME}/logs/cerit-workers.log"
+  >> "${HOME}/logs/cerit-workers.log" 2>&1 &
 
-EXIT_CODE=${PIPESTATUS[0]}
-
+WORKER_PID=$!
 rm -f "$TASK_FILE"
+
+# Poll until worker finishes, printing a heartbeat line every 30s so the
+# Bash tool does not time out on long tasks.
+ELAPSED=0
+while kill -0 "$WORKER_PID" 2>/dev/null; do
+  sleep 30
+  ELAPSED=$((ELAPSED + 30))
+  echo "[cerit-worker] still running... (${ELAPSED}s elapsed, PID $WORKER_PID)"
+done
+
+wait "$WORKER_PID"
+EXIT_CODE=$?
 
 if [ $EXIT_CODE -ne 0 ]; then
   echo "STATUS: failed" >> "$OUTPUT_FILE"

@@ -78,6 +78,12 @@ Delegate via bash to CERIT for ANY of:
 - Data processing / ML pipeline work
 - Git operations (commit, push, PR creation)
 
+CRITICAL: cerit-worker.sh runs the worker in the background and prints
+heartbeat lines every 30s until done. You MUST call it synchronously
+(NEVER run_in_background: true) and with timeout: 600000 (10 min).
+The script will NOT return until the worker finishes — wait for it.
+After it returns, read the output file to get the result.
+
 Parallel dispatch – ALL conditions must be met:
   ✓ Tasks are independent with no shared state
   ✓ Clear file boundaries, no overlap
