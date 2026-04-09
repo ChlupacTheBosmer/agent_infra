@@ -36,21 +36,27 @@ if ! command -v gh &>/dev/null; then
   echo "NOTE: 'gh' (GitHub CLI) not found. PR creation in workers will be skipped."
 fi
 
-# Also check common extension-installed claude locations
-if ! command -v claude &>/dev/null; then
-  for CLAUDE_PATH in \
-    "$HOME/Library/Application Support/Claude/claude-code-vm"/*/claude \
-    "$HOME/.local/bin/claude" \
-    "/usr/local/bin/claude"; do
-    # shellcheck disable=SC2086
-    FOUND=$(ls $CLAUDE_PATH 2>/dev/null | head -1 || true)
-    if [ -n "$FOUND" ] && [ -x "$FOUND" ]; then
-      export PATH="$(dirname "$FOUND"):$PATH"
-      echo "  Found claude at: $FOUND"
-      break
-    fi
-  done
+# Create ~/bin/claude wrapper that finds the macOS app bundle binary
+# This survives Claude Code version updates and is added to PATH
+mkdir -p "$HOME/bin"
+cat > "$HOME/bin/claude" << 'CLAUDEWRAP'
+#!/bin/bash
+# Stable wrapper for Claude Code CLI – survives version updates
+_CLAUDE=$(find "$HOME/Library/Application Support/Claude/claude-code" \
+  -path "*/MacOS/claude" -type f 2>/dev/null | sort -V | tail -1)
+if [ -z "$_CLAUDE" ] || [ ! -x "$_CLAUDE" ]; then
+  _CLAUDE=$(find "$HOME/Library/Python" \
+    -path "*/claude_agent_sdk/_bundled/claude" -type f 2>/dev/null | head -1)
 fi
+if [ -z "$_CLAUDE" ] || [ ! -x "$_CLAUDE" ]; then
+  echo "ERROR: claude CLI not found" >&2
+  exit 127
+fi
+exec "$_CLAUDE" "$@"
+CLAUDEWRAP
+chmod +x "$HOME/bin/claude"
+export PATH="$HOME/bin:$PATH"
+echo "  ✓ Created ~/bin/claude wrapper (stable across version updates)"
 
 echo "  ✓ All required tools found"
 
@@ -180,8 +186,8 @@ export AGENT_FROM_EMAIL="agent@localhost"
 export SMTP_HOST="localhost"
 export SMTP_PORT="25"
 
-# Scripts in PATH
-export PATH="\$PATH:$AGENT_INFRA_DIR/scripts"
+# Scripts and stable claude wrapper in PATH
+export PATH="\$HOME/bin:\$PATH:$AGENT_INFRA_DIR/scripts"
 
 # Provider switching aliases
 alias ca='claude'
@@ -272,7 +278,7 @@ new_settings = {
         "CERIT_LIBRARIAN_MODEL": "$CERIT_LIBRARIAN_MODEL",
         "VAULT": "$VAULT",
         "AGENT_INFRA_DIR": "$AGENT_INFRA_DIR",
-        "PATH": "$AGENT_INFRA_DIR/scripts:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin:/opt/homebrew/bin"
+        "PATH": "$HOME/bin:$AGENT_INFRA_DIR/scripts:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin:/opt/homebrew/bin"
     },
     "hooks": {
         "UserPromptSubmit": [
