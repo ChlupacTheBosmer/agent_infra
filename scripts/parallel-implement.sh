@@ -102,7 +102,7 @@ spawn_worker() {
     return 1
   fi
 
-  local TASK_FILE=$(mktemp /tmp/cerit-task-XXXXXX.md)
+  local TASK_FILE=$(mktemp /tmp/cerit-task-XXXXXX)
   cat > "$TASK_FILE" << TASKEOF
 # Parallel Implementation Task – Attempt $WORKER_ID of $N_WORKERS
 # Run: $TIMESTAMP
@@ -248,7 +248,7 @@ echo "--- Spawning judge ---"
 
 JUDGE_OUTPUT="$RESULTS_DIR/judge-verdict.md"
 JUDGE_LOG="${HOME}/logs/cerit-judge-${TIMESTAMP}.log"
-JUDGE_TASK=$(mktemp /tmp/cerit-judge-XXXXXX.md)
+JUDGE_TASK=$(mktemp /tmp/cerit-judge-XXXXXX)
 
 # Build worker reports section dynamically
 WORKER_REPORTS=""

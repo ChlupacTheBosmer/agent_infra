@@ -29,7 +29,7 @@ run_implementer() {
   local CRITIQUE_FILE="${2:-}"
   local OUTPUT="$RESULTS_DIR/impl-round-${ROUND}.md"
   local LOG="${HOME}/logs/refine-impl-${TIMESTAMP}-r${ROUND}.log"
-  local TASK_FILE=$(mktemp /tmp/refine-impl-XXXXXX.md)
+  local TASK_FILE=$(mktemp /tmp/refine-impl-XXXXXX)
 
   cat > "$TASK_FILE" << TASKEOF
 # Implementation Task – Round $ROUND of $MAX_ROUNDS
@@ -82,7 +82,7 @@ run_evaluator() {
   local IMPL_FILE="$2"
   local OUTPUT="$RESULTS_DIR/eval-round-${ROUND}.md"
   local LOG="${HOME}/logs/refine-eval-${TIMESTAMP}-r${ROUND}.log"
-  local TASK_FILE=$(mktemp /tmp/refine-eval-XXXXXX.md)
+  local TASK_FILE=$(mktemp /tmp/refine-eval-XXXXXX)
 
   cat > "$TASK_FILE" << TASKEOF
 # Evaluation Task – Round $ROUND
@@ -204,7 +204,7 @@ echo "================================================================"
 
 # Archive to vault if available
 if [ "$FINAL_STATUS" != "failed" ] && command -v librarian-archive.sh &>/dev/null; then
-  ARCHIVE_FILE=$(mktemp /tmp/refine-archive-XXXXXX.md)
+  ARCHIVE_FILE=$(mktemp /tmp/refine-archive-XXXXXX)
   cat > "$ARCHIVE_FILE" << ARCHEOF
 # Implement-and-Refine Session – $TIMESTAMP
 Rounds: $ROUND_NUM / $MAX_ROUNDS

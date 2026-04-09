@@ -27,7 +27,7 @@ if [ ! -f "$RETRIEVE_PROMPT" ]; then
   exit 1
 fi
 
-TASK_FILE=$(mktemp /tmp/librarian-retrieve-task-XXXXXX.md)
+TASK_FILE=$(mktemp /tmp/librarian-retrieve-task-XXXXXX)
 
 cat > "$TASK_FILE" << TASKEOF
 # Librarian Retrieval Task

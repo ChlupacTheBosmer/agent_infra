@@ -23,7 +23,7 @@ echo "[vault-health] Starting vault health check at $TIMESTAMP"
 echo "[vault-health] Vault: $VAULT"
 echo "[vault-health] Report: $REPORT"
 
-TASK_FILE=$(mktemp /tmp/vault-health-task-XXXXXX.md)
+TASK_FILE=$(mktemp /tmp/vault-health-task-XXXXXX)
 
 cat > "$TASK_FILE" << TASKEOF
 # Vault Health Check – $DATE

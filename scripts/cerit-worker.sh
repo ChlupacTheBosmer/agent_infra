@@ -16,7 +16,7 @@ OUTPUT_FILE="$2"
 BRANCH="${3:-}"
 MAX_TURNS="${4:-80}"
 TIMESTAMP=$(date '+%Y-%m-%d %H:%M:%S')
-TASK_FILE=$(mktemp /tmp/cerit-task-XXXXXX.md)
+TASK_FILE=$(mktemp /tmp/cerit-task-XXXXXX)
 
 # ── Parse task input: YAML spec file or inline string ───────────────────────
 if [ -f "$TASK_INPUT" ] && (echo "$TASK_INPUT" | grep -qE '\.(yaml|yml)$'); then

@@ -35,7 +35,7 @@ if [ ! -f "$ARCHIVE_PROMPT" ]; then
   exit 1
 fi
 
-TASK_FILE=$(mktemp /tmp/librarian-archive-task-XXXXXX.md)
+TASK_FILE=$(mktemp /tmp/librarian-archive-task-XXXXXX)
 
 cat > "$TASK_FILE" << TASKEOF
 # Librarian Archive Task – $TIMESTAMP
