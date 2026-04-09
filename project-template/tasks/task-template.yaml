@@ -1,0 +1,48 @@
+# Task specification – copy and fill in before spawning a worker
+# Usage: cerit-worker.sh tasks/task-NNN.yaml <output_file> [branch]
+
+id: task-NNN
+title: "Short imperative description"
+type: feature  # feature | bugfix | refactor | research | data | analysis
+
+priority: high  # high | medium | low
+estimated_turns: 40  # rough estimate; worker will stop at max_turns
+
+# Context the worker needs before starting
+context:
+  project: my-project                  # vault project name for librarian
+  vault_project: my-project            # may differ from project name
+
+  # Files the worker should read before implementing
+  read_first:
+    - docs/adr/                        # always read ADRs
+    - src/relevant_module.py           # specific files relevant to this task
+    # - vault briefing is fetched automatically if vault_project is set
+
+  # Files the worker is allowed to modify (others need justification)
+  affected_files:
+    - src/new_module.py
+    - tests/test_new_module.py
+
+# What "done" means – worker verifies against these before reporting done
+acceptance_criteria:
+  - "Description of observable behaviour 1"
+  - "All existing tests still pass"
+  - "New tests added for the new functionality"
+  - "No new linting errors"
+
+# Hard constraints the worker must not violate
+constraints:
+  - "No new pip dependencies without prior approval"
+  - "Must maintain backward compatibility with existing API"
+  - "Do not modify files outside affected_files without justification"
+  - "Performance: no regression on benchmark X"
+
+# How success is measured (the worker runs this to verify)
+success_metric: "pytest tests/ -q exits 0 with all new tests passing"
+
+# Optional: specific things to try or avoid
+implementation_hints:
+  approach: "Start by reading the existing data loader before implementing"
+  avoid: "Do not use global state"
+  reference: "Follow the pattern in src/existing_similar_module.py"
