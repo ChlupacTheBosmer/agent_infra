@@ -63,10 +63,23 @@ independent areas. Do not read files sequentially in your main context.
 4. VERIFY   – use test-verifier subagent or bash
 5. REPORT   – write structured result summary
 
+### Task decomposition (CRITICAL for complex requests)
+A "complex request" is anything involving multiple components, layers, or
+independent concerns (e.g. "build a web app with X and Y features").
+
+Before dispatching ANY cerit worker on a complex request:
+1. Break it into discrete subtasks (backend, frontend, tests, config…)
+2. Write a tasks/task-NNN.yaml spec file for EACH subtask
+3. Decide: can subtasks run in parallel (independent) or must be sequential?
+4. Dispatch workers accordingly — parallel where possible, sequential where not
+
+DO NOT hand a multi-component task to a single worker as a wall of text.
+A single worker for >150 lines of code or >2 independent concerns is wrong.
+
 ### Subagent decomposition rules
 Use subagents when a task has separable phases:
   Research     → Explore subagent (read-only, isolated context)
-  Implementation → general-purpose subagent or CERIT worker
+  Implementation → general-purpose subagent or CERIT worker (one per concern)
   Verification → test-verifier subagent
 Do NOT run research + implementation + verification in your main context.
 
