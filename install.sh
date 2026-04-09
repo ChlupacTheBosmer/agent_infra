@@ -85,7 +85,7 @@ echo "Step 3: Querying CERIT models..."
 
 # Pre-configured CERIT credentials
 CERIT_API_KEY_FIXED="REPLACE_WITH_CERIT_API_KEY"
-CERIT_BASE_URL_FIXED="https://llm.ai.e-infra.cz/v1"
+CERIT_BASE_URL_FIXED="https://llm.ai.e-infra.cz/"
 
 MODEL_LIST=$(curl -s --max-time 15 \
   -H "Authorization: Bearer $CERIT_API_KEY_FIXED" \
