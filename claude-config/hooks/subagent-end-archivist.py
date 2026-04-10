@@ -12,6 +12,10 @@ import tempfile
 from datetime import datetime
 from pathlib import Path
 
+# CERIT workers must not archive — only the orchestrator session archives.
+if "e-infra.cz" in os.environ.get("ANTHROPIC_BASE_URL", ""):
+    sys.exit(0)
+
 
 def main():
     try:

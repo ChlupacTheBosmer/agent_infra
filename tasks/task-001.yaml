@@ -1,0 +1,32 @@
+title: "Build url-checker.py – concurrent HTTP health checker CLI"
+type: implementation
+estimated_turns: 20
+
+description: |
+  Build a standalone Python CLI tool at /tmp/cerit-demo/url_checker.py
+  that checks HTTP status of multiple URLs concurrently and prints
+  a formatted status report.
+
+acceptance_criteria:
+  - /tmp/cerit-demo/url_checker.py exists and runs with python3
+  - Accepts one or more URLs as positional CLI arguments
+  - Checks all URLs concurrently using ThreadPoolExecutor (max 10 workers)
+  - For each URL prints: status code, response time in ms, and OK/FAIL label
+  - URLs that time out (>5s) or raise errors show TIMEOUT or ERROR
+  - Exits with code 0 if all URLs returned 2xx, else exit code 1
+  - Script is self-contained, no third-party dependencies (stdlib only)
+  - Includes a brief docstring at the top
+  - Works on Python 3.8+
+
+constraints:
+  - Use only Python stdlib (urllib, concurrent.futures, argparse, time)
+  - No requests, httpx, aiohttp or other packages
+  - Single file, no setup.py or requirements.txt needed
+  - Write to /tmp/cerit-demo/ directory (create if needed)
+
+output_file: /tmp/cerit-demo-result.md
+
+verification:
+  - Run: python3 /tmp/cerit-demo/url_checker.py https://httpbin.org/status/200 https://httpbin.org/status/404 https://httpbin.org/delay/6
+  - Expected: 200 OK, 404 FAIL, TIMEOUT shown in output
+  - Script must actually run without errors

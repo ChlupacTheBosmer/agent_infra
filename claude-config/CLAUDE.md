@@ -67,19 +67,17 @@ Delegate via bash to CERIT for ANY of:
 - Data processing / ML pipeline work
 - Git operations (commit, push, PR creation)
 
-CRITICAL: cerit-worker.sh launches the worker and returns IMMEDIATELY.
-The worker runs detached in the background. You MUST then poll the output
-file until STATUS: appears — do NOT proceed without reading the result:
+CRITICAL: Always call cerit-worker.sh via Bash with run_in_background=true.
+The script blocks until the worker exits — the Bash background task fires a
+task-notification on completion. Read the output file when notified.
 
   OUTPUT=/tmp/result-$(date +%s).md
-  cerit-worker.sh "task..." "$OUTPUT"
-  # Now poll — each iteration is a short Bash call:
-  while ! grep -q "^STATUS:" "$OUTPUT" 2>/dev/null; do
-    sleep 30; echo "still waiting..."
-  done
-  cat "$OUTPUT"
+  # Use Bash tool with run_in_background=true:
+  cerit-worker.sh "task description" "$OUTPUT"
+  # → notification fires when done → read "$OUTPUT"
 
-Never skip the poll. Never assume the worker succeeded without reading STATUS.
+Never call cerit-worker.sh in a foreground Bash call (it will block forever).
+Never assume the worker succeeded without reading STATUS: from the output file.
 
 ## Context discipline
 - Grep for what you need; do not read entire large files
