@@ -61,6 +61,20 @@ $TASK_TITLE (type: $TASK_TYPE)
 $([ -n "$BRIEFING_CONTENT" ] && echo "## Vault context (read these files first)
 $BRIEFING_CONTENT
 ")
+$(if [ -n "$BRANCH" ]; then echo "## Git context
+- Base branch: main
+- Your branch: $BRANCH
+- Create it fresh: git checkout -b $BRANCH
+- After work: git add -A && git commit && git push && gh pr create --fill --base main
+"; fi)
+## Output format (write to $OUTPUT_FILE when done)
+STATUS: done|failed|needs_review|needs_clarification
+BRANCH: ${BRANCH:-none}
+PR: (URL if opened, else none)
+SUMMARY: (3-5 sentences: what you built/changed, key decisions made)
+ISSUES: (anything unexpected or requiring orchestrator attention)
+ARTEFACTS: (key files created or modified, test results summary)
+NEXT: (what should happen next)
 TASKEOF
 
 else
@@ -144,6 +158,7 @@ echo "[cerit-worker] Branch: ${BRANCH:-none}"
 LAUNCHER=$(mktemp /tmp/cerit-launch-XXXXXX)
 cat > "$LAUNCHER" << LAUNCHEOF
 #!/bin/bash
+export PATH="${PATH}"
 ANTHROPIC_BASE_URL="${CERIT_BASE_URL}" \\
 ANTHROPIC_AUTH_TOKEN="${CERIT_API_KEY}" \\
 ANTHROPIC_MODEL="${CERIT_CODER_MODEL}" \\

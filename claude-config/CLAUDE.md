@@ -30,18 +30,10 @@ These infrastructure rules apply in all three roles.
 
 ### Available scripts (in PATH via agent-infra)
 - cerit-worker.sh <task_or_spec> <output> [branch]       – spawn a CERIT worker
-- parallel-implement.sh "<task>" [branch] [n_workers]    – best-of-N with judge
-- implement-and-refine.sh <task_or_spec> [branch] [rounds] – generator-evaluator loop
 - librarian-retrieve.sh "<task>" <project>               – vault reading list briefing
 - librarian-archive.sh <type> <file> <project>           – archive content to vault
 - vault-health.sh [project]                              – weekly vault curation report
 - send-report.py "subject" [file]                        – email progress report
-
-### Available skills (in ~/.claude/skills/)
-Skills are loaded on demand. Check ~/.claude/skills/README.md for the
-current list. Use /skill-name to invoke. Key built-in skills:
-- /parallel-implement – best-of-3 parallel coding with judge
-- /implement-and-refine – generator-evaluator refinement loop
 
 ## Tool use doctrine – use the RIGHT tool, not the EASY tool
 
@@ -53,9 +45,6 @@ Use the Explore subagent (or deep-explorer) for:
 - Discovering existing tests for the area you're touching
 - Learning codebase patterns and conventions
 
-Spawn Explore subagents IN PARALLEL when investigating multiple
-independent areas. Do not read files sequentially in your main context.
-
 ### Mandatory work sequence for non-trivial tasks
 1. EXPLORE  – use Explore/deep-explorer subagent(s)
 2. PLAN     – write a numbered plan before acting
@@ -63,23 +52,10 @@ independent areas. Do not read files sequentially in your main context.
 4. VERIFY   – use test-verifier subagent or bash
 5. REPORT   – write structured result summary
 
-### Task decomposition (CRITICAL for complex requests)
-A "complex request" is anything involving multiple components, layers, or
-independent concerns (e.g. "build a web app with X and Y features").
-
-Before dispatching ANY cerit worker on a complex request:
-1. Break it into discrete subtasks (backend, frontend, tests, config…)
-2. Write a tasks/task-NNN.yaml spec file for EACH subtask
-3. Decide: can subtasks run in parallel (independent) or must be sequential?
-4. Dispatch workers accordingly — parallel where possible, sequential where not
-
-DO NOT hand a multi-component task to a single worker as a wall of text.
-A single worker for >150 lines of code or >2 independent concerns is wrong.
-
 ### Subagent decomposition rules
 Use subagents when a task has separable phases:
   Research     → Explore subagent (read-only, isolated context)
-  Implementation → general-purpose subagent or CERIT worker (one per concern)
+  Implementation → one CERIT worker (one task at a time)
   Verification → test-verifier subagent
 Do NOT run research + implementation + verification in your main context.
 
@@ -104,20 +80,6 @@ file until STATUS: appears — do NOT proceed without reading the result:
   cat "$OUTPUT"
 
 Never skip the poll. Never assume the worker succeeded without reading STATUS.
-
-Parallel dispatch – ALL conditions must be met:
-  ✓ Tasks are independent with no shared state
-  ✓ Clear file boundaries, no overlap
-  ✓ Each task is fully self-contained
-
-Sequential dispatch – if ANY is true:
-  ✓ Tasks have dependencies (B needs A's output)
-  ✓ Shared files or risk of merge conflict
-
-### Parallel implementation pattern (ORCHESTRATOR only)
-Use parallel-implement.sh when:
-  ✓ Task > ~50 lines, approach is non-obvious, quality matters
-Do NOT use for: obvious bug fixes, config changes, documentation
 
 ## Context discipline
 - Grep for what you need; do not read entire large files
