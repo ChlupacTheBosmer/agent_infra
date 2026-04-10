@@ -138,41 +138,36 @@ echo "[cerit-worker] Starting task at $TIMESTAMP"
 echo "[cerit-worker] Output: $OUTPUT_FILE"
 echo "[cerit-worker] Branch: ${BRANCH:-none}"
 
-# ── Run worker in background, heartbeat every 30s so the caller doesn't time out ──
-ANTHROPIC_BASE_URL="${CERIT_BASE_URL}" \
-ANTHROPIC_AUTH_TOKEN="${CERIT_API_KEY}" \
-ANTHROPIC_MODEL="${CERIT_CODER_MODEL}" \
-ANTHROPIC_DEFAULT_OPUS_MODEL="${CERIT_THINKER_MODEL}" \
-ANTHROPIC_DEFAULT_SONNET_MODEL="${CERIT_CODER_MODEL}" \
-ANTHROPIC_DEFAULT_HAIKU_MODEL="${CERIT_FAST_MODEL}" \
-CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC=1 \
-claude -p "$(cat "$TASK_FILE")" \
-  --allowedTools "Read,Edit,Write,Bash,Glob,Grep,WebSearch,WebFetch" \
-  --max-turns "$MAX_TURNS" \
-  --dangerously-skip-permissions \
-  --output-format text \
-  >> "${HOME}/logs/cerit-workers.log" 2>&1 &
-
-WORKER_PID=$!
-rm -f "$TASK_FILE"
-
-# Poll until worker finishes, printing a heartbeat line every 30s so the
-# Bash tool does not time out on long tasks.
-ELAPSED=0
-while kill -0 "$WORKER_PID" 2>/dev/null; do
-  sleep 30
-  ELAPSED=$((ELAPSED + 30))
-  echo "[cerit-worker] still running... (${ELAPSED}s elapsed, PID $WORKER_PID)"
-done
-
-wait "$WORKER_PID"
-EXIT_CODE=$?
-
-if [ $EXIT_CODE -ne 0 ]; then
-  echo "STATUS: failed" >> "$OUTPUT_FILE"
-  echo "SUMMARY: Worker process exited with code $EXIT_CODE" >> "$OUTPUT_FILE"
-  echo "ISSUES: Check ${HOME}/logs/cerit-workers.log for details" >> "$OUTPUT_FILE"
+# ── Write a launcher script and execute it in background via nohup ─────────
+# This returns immediately — the claude process runs detached.
+# The orchestrator must poll $OUTPUT_FILE until STATUS: appears.
+LAUNCHER=$(mktemp /tmp/cerit-launch-XXXXXX)
+cat > "$LAUNCHER" << LAUNCHEOF
+#!/bin/bash
+ANTHROPIC_BASE_URL="${CERIT_BASE_URL}" \\
+ANTHROPIC_AUTH_TOKEN="${CERIT_API_KEY}" \\
+ANTHROPIC_MODEL="${CERIT_CODER_MODEL}" \\
+ANTHROPIC_DEFAULT_OPUS_MODEL="${CERIT_THINKER_MODEL}" \\
+ANTHROPIC_DEFAULT_SONNET_MODEL="${CERIT_CODER_MODEL}" \\
+ANTHROPIC_DEFAULT_HAIKU_MODEL="${CERIT_FAST_MODEL}" \\
+CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC=1 \\
+claude -p "\$(cat '${TASK_FILE}')" \\
+  --allowedTools "Read,Edit,Write,Bash,Glob,Grep,WebSearch,WebFetch" \\
+  --max-turns "${MAX_TURNS}" \\
+  --dangerously-skip-permissions \\
+  --output-format text \\
+  >> "${HOME}/logs/cerit-workers.log" 2>&1
+EXIT_CODE=\$?
+rm -f "${TASK_FILE}" "${LAUNCHER}"
+if [ \$EXIT_CODE -ne 0 ] && ! grep -q "^STATUS:" "${OUTPUT_FILE}" 2>/dev/null; then
+  printf "STATUS: failed\nSUMMARY: Worker exited with code %s\nISSUES: Check %s/logs/cerit-workers.log\n" \
+    "\$EXIT_CODE" "${HOME}" >> "${OUTPUT_FILE}"
 fi
+LAUNCHEOF
+chmod +x "$LAUNCHER"
 
-echo "[cerit-worker] Done (exit $EXIT_CODE). Output at: $OUTPUT_FILE"
-exit $EXIT_CODE
+nohup "$LAUNCHER" &>/dev/null &
+WORKER_PID=$!
+
+echo "[cerit-worker] Worker launched (PID $WORKER_PID)"
+echo "[cerit-worker] POLL: while ! grep -q '^STATUS:' '$OUTPUT_FILE' 2>/dev/null; do sleep 30; echo 'still waiting...'; done && cat '$OUTPUT_FILE'"
